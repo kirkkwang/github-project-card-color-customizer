@@ -4,7 +4,7 @@
   "version": "1.0",
   "description": "Customize colors of GitHub project tickets based on repository.",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://github.com/*"],
+  "host_permissions": ["https://github.com/orgs/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -16,7 +16,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
+      "matches": ["https://github.com/orgs/*"],
       "js": ["scripts/content.js"]
     }
   ],
