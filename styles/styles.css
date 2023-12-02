@@ -1,7 +1,52 @@
-h1 {
-  color: red;
-  font-size: 2.5em;
-  font-weight: 300;
-  text-align: center;
-  margin: 0 0 0.5em;
+body {
+  width: 26rem;
+  height: 25rem;
+  padding: 1rem;
+}
+
+button {
+  padding: 0.25rem 1rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+input[type="color"] {
+  height: 2rem;
+  border: none;
+  margin-left: 0.25rem;
+}
+
+.inputs-group {
+  display: grid;
+  grid-template-columns: 8fr 2.5fr 1fr auto;
+  grid-gap: 0.5rem;
+  align-items: center;
+}
+
+.inputs-group input[type="text"],
+.inputs-group input[type="color"] {
+  width: 100%;
+}
+
+.inputs-group button {
+  /* padding: 0.5rem 1rem; */
+  /* background-color: #4CAF50; */
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(90%);
+}
+
+button:active {
+  filter: brightness(120%);
+}
+
+.remove-button {
+  background-color: #f44336;
+  font-size: 1rem;
 }
