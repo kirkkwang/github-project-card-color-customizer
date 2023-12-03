@@ -2,9 +2,7 @@ console.log("Github Board Colorizer Extension Loaded");
 
 function observeBoardChanges(repoColorMapping) {
   // Select the node that will be observed for mutations
-  const boardNode = document.querySelector(
-    '[data-testid="board-view"]'
-  );
+  const boardNode = document.querySelector('[data-testid="board-view"]');
 
   // Options for the observer (which mutations to observe)
   const config = { childList: true, subtree: true };
@@ -47,6 +45,18 @@ function applyCustomStyles(repoColorMapping) {
     }
   });
 }
+
+// Listen for messages from the popup
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.action === "updateStyles") {
+    let repoColorMapping = message.data.reduce((acc, item) => {
+      acc[item.repoName] = item.color;
+      return acc;
+    }, {});
+
+    applyCustomStyles(repoColorMapping);
+  }
+});
 
 // Load and apply user preferences
 chrome.storage.sync.get("repoColors", function (data) {
