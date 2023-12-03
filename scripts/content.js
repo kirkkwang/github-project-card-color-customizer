@@ -1,72 +1,96 @@
 console.log("Github Board Colorizer Extension Loaded");
 
-function observeBoardChanges(repoColorMapping) {
-  // Select the node that will be observed for mutations
+let globalRepoColorMapping = {};
+
+function observeBoardChanges() {
   const boardNode = document.querySelector('[data-testid="board-view"]');
+  if (!boardNode) return;
 
-  // Options for the observer (which mutations to observe)
-  const config = { childList: true, subtree: true };
-
-  // Callback function to execute when mutations are observed
-  const callback = function (mutationsList, observer) {
-    for (let mutation of mutationsList) {
-      if (mutation.type === "childList") {
-        applyCustomStyles(repoColorMapping);
-      }
-    }
+  const config = {
+    childList: true,
+    subtree: true,
+    attributes: true, // Observe attribute changes
+    attributeFilter: ["aria-disabled", "class"], // Focus on specific attributes
   };
 
-  // Create an observer instance linked to the callback function
-  const observer = new MutationObserver(callback);
+  const observer = new MutationObserver((mutationsList, observer) => {
+    for (let mutation of mutationsList) {
+      if (mutation.type === "childList") {
+        applyCustomStyles();
+      }
+    }
+  });
 
-  // Start observing the target node for configured mutations
-  if (boardNode) {
-    observer.observe(boardNode, config);
-  }
+  observer.observe(boardNode, config);
 }
 
-function applyCustomStyles(repoColorMapping) {
+function applyCustomStyles() {
   const cards = document.querySelectorAll(
     '[data-testid="board-view-column-card"]'
   );
 
   cards.forEach((card) => {
-    const repoSpan = card.querySelector("span"); // Finds the first span that should contain the repo name
+    const repoSpan = card.querySelector("span");
     if (repoSpan) {
-      const repoText = repoSpan.textContent.split(" ")[0]; // Extracting repo name
-      const customColor = repoColorMapping[repoText];
+      const repoName = repoSpan.textContent.split(" ")[0];
+      const customColor = globalRepoColorMapping[repoName];
       if (customColor) {
-        // Find the first div within the card
-        const targetDiv = card.querySelector("div");
-        if (targetDiv) {
-          targetDiv.style.backgroundColor = customColor; // Apply custom color
+        const sanitizedRepoName = sanitizeRepoName(repoName);
+        const className = `custom-color-${sanitizedRepoName}-${customColor.replace(
+          "#",
+          ""
+        )}`;
+        const firstChildDiv = card.querySelector("div:first-child"); // Targeting the first child div of the card
+        if (firstChildDiv) {
+          firstChildDiv.classList.add(className);
+          injectStyle(className, customColor);
         }
       }
     }
   });
 }
 
+function injectStyle(className, color) {
+  // Use a data attribute to mark your style tags
+  const styleId = `style-for-${className}`;
+
+  console.log(
+    `className: ${className}, style: .${className} { background-color: ${color} !important; }`
+  );
+
+  if (!document.head.querySelector(`style[data-style-id="${styleId}"]`)) {
+    const style = document.createElement("style");
+    style.setAttribute("data-style-id", styleId); // Set the data attribute
+    style.textContent = `.${className} { background-color: ${color} !important; }`;
+    document.head.append(style);
+  }
+}
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.action === "updateStyles") {
-    let repoColorMapping = message.data.reduce((acc, item) => {
+    globalRepoColorMapping = message.data.reduce((acc, item) => {
       acc[item.repoName] = item.color;
       return acc;
     }, {});
 
-    applyCustomStyles(repoColorMapping);
+    applyCustomStyles();
   }
 });
 
 // Load and apply user preferences
 chrome.storage.sync.get("repoColors", function (data) {
   if (data.repoColors) {
-    let repoColorMapping = data.repoColors.reduce((acc, item) => {
+    globalRepoColorMapping = data.repoColors.reduce((acc, item) => {
       acc[item.repoName] = item.color;
       return acc;
     }, {});
 
-    applyCustomStyles(repoColorMapping);
-    observeBoardChanges(repoColorMapping);
+    applyCustomStyles();
+    observeBoardChanges();
   }
 });
+
+function sanitizeRepoName(repoName) {
+  return repoName.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-_]/g, "");
+}

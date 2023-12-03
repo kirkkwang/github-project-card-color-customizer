@@ -1,7 +1,9 @@
 function saveData() {
   var data = [];
   document.querySelectorAll(".inputs-group").forEach((group) => {
-    var repoName = group.querySelector('input[type="text"]').value;
+    var repoName = sanitizeRepoName(
+      group.querySelector('input[type="text"]').value
+    );
     var color = group.querySelector('input[type="color"]').value;
     if (repoName) {
       data.push({ repoName: repoName, color: color });
@@ -73,7 +75,9 @@ loadData();
 function updateStorageAfterRemoval() {
   var data = [];
   document.querySelectorAll(".inputs-group").forEach((group) => {
-    var repoName = group.querySelector('input[type="text"]').value;
+    var repoName = sanitizeRepoName(
+      group.querySelector('input[type="text"]').value
+    );
     var color = group.querySelector('input[type="color"]').value;
     if (repoName) {
       data.push({ repoName: repoName, color: color });
@@ -90,4 +94,8 @@ function updateStorageAfterRemoval() {
       });
     });
   });
+}
+
+function sanitizeRepoName(repoName) {
+  return repoName.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-_]/g, "");
 }
