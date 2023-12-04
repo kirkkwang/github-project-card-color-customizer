@@ -1,4 +1,5 @@
 console.log("Github Board Colorizer Extension Loaded");
+observeBoardChanges() // starts observing board change on load
 
 let globalRepoColorMapping = {};
 
@@ -54,10 +55,6 @@ function injectStyle(className, color) {
   // Use a data attribute to mark your style tags
   const styleId = `style-for-${className}`;
 
-  console.log(
-    `className: ${className}, style: .${className} { background-color: ${color} !important; }`
-  );
-
   if (!document.head.querySelector(`style[data-style-id="${styleId}"]`)) {
     const style = document.createElement("style");
     style.setAttribute("data-style-id", styleId); // Set the data attribute
@@ -78,6 +75,19 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   }
 });
 
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.action === "updateStylesAfterRemoval") {
+    // Update globalRepoColorMapping
+    globalRepoColorMapping = message.data.reduce((acc, item) => {
+      acc[item.repoName] = item.color;
+      return acc;
+    }, {});
+
+    // Remove the old style and update affected cards
+    removeOldStyleAndApplyNewStyles(globalRepoColorMapping);
+  }
+});
+
 // Load and apply user preferences
 chrome.storage.sync.get("repoColors", function (data) {
   if (data.repoColors) {
@@ -93,4 +103,27 @@ chrome.storage.sync.get("repoColors", function (data) {
 
 function sanitizeRepoName(repoName) {
   return repoName.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-_]/g, "");
+}
+
+function removeOldStyleAndApplyNewStyles(repoColorMapping) {
+  // Remove all injected styles related to repo colors
+  document
+    .querySelectorAll('style[data-style-id^="style-for-custom-color"]')
+    .forEach((styleTag) => {
+      styleTag.remove();
+    });
+
+  // Remove classes from cards and reapply styles
+  document
+    .querySelectorAll('[data-testid="board-view-column-card"] div:first-child')
+    .forEach((cardDiv) => {
+      Array.from(cardDiv.classList).forEach((className) => {
+        if (className.startsWith("custom-color-")) {
+          cardDiv.classList.remove(className);
+        }
+      });
+    });
+
+  // Reapply styles with updated color mapping
+  applyCustomStyles();
 }
