@@ -3,7 +3,7 @@
   "name": "GitHub Project Card Color Customizer",
   "version": "1.0",
   "description": "Customize colors of GitHub project tickets based on repository.",
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://github.com/orgs/*"],
   "action": {
     "default_popup": "popup.html",
