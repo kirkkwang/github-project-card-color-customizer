@@ -4,7 +4,10 @@ observeBoardChanges() // starts observing board change on load
 let globalRepoColorMapping = {};
 
 function observeBoardChanges() {
-  const boardNode = document.querySelector('[data-testid="board-view"]');
+  const boardNode = document.querySelector(
+    '[data-dnd-drop-id="board"]'
+  );
+
   if (!boardNode) return;
 
   const config = {
@@ -27,7 +30,7 @@ function observeBoardChanges() {
 
 function applyCustomStyles() {
   const cards = document.querySelectorAll(
-    '[data-testid="board-view-column-card"]'
+    '.board-view-column-card'
   );
 
   cards.forEach((card) => {
