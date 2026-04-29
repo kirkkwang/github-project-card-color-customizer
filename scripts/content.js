@@ -17,10 +17,13 @@ function observeBoardChanges() {
     attributeFilter: ["aria-disabled", "class"], // Focus on specific attributes
   };
 
-  const observer = new MutationObserver((mutationsList, observer) => {
+  let debounceTimer = null;
+  const observer = new MutationObserver((mutationsList) => {
     for (let mutation of mutationsList) {
       if (mutation.type === "childList") {
-        applyCustomStyles();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => applyCustomStyles(), 100);
+        break;
       }
     }
   });
@@ -34,9 +37,28 @@ function applyCustomStyles() {
   );
 
   cards.forEach((card) => {
-    const repoSpan = card.querySelector("span");
-    if (repoSpan) {
-      const repoName = repoSpan.textContent.split(" ")[0];
+    let repoName = null;
+
+    // Primary: extract from card header title (accessibility anchor, stable)
+    const titleEl = card.querySelector('[id^="board-card-header-title-"]');
+    if (titleEl) {
+      repoName = titleEl.textContent.trim().split(/\s+/)[0];
+    }
+
+    // Fallback: extract from repo token in Fields list
+    if (!repoName || !globalRepoColorMapping[repoName]) {
+      const repoIcon = card.querySelector('.octicon-repo');
+      if (repoIcon) {
+        const button = repoIcon.closest('button');
+        if (button) {
+          const fullName = button.getAttribute('text') || button.textContent.trim();
+          const parts = fullName.split('/');
+          repoName = parts[parts.length - 1].trim();
+        }
+      }
+    }
+
+    if (repoName) {
       const customColor = globalRepoColorMapping[repoName];
       if (customColor) {
         const sanitizedRepoName = sanitizeRepoName(repoName);
@@ -118,7 +140,7 @@ function removeOldStyleAndApplyNewStyles(repoColorMapping) {
 
   // Remove classes from cards and reapply styles
   document
-    .querySelectorAll('[data-testid="board-view-column-card"] div:first-child')
+    .querySelectorAll('.board-view-column-card > div:first-child')
     .forEach((cardDiv) => {
       Array.from(cardDiv.classList).forEach((className) => {
         if (className.startsWith("custom-color-")) {
